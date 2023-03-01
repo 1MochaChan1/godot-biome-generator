@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://bp8soc0oq5wro"]
+
+[ext_resource type="PackedScene" uid="uid://dp5jgteont2i7" path="res://Scenes/Player.tscn" id="1_h6kah"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ohb23"]
+albedo_color = Color(0.054902, 0.054902, 0.054902, 1)
+
+[sub_resource type="Environment" id="Environment_x5j60"]
+sdfgi_enabled = true
+
+[node name="Node3D" type="Node3D"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+material_override = SubResource("StandardMaterial3D_ohb23")
+size = Vector3(14.0731, 0.681535, 11.996)
+
+[node name="Player" parent="." instance=ExtResource("1_h6kah")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.36813, 2.08924, 1.17217)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.412055, 0.911159, 0, -0.911159, -0.412055, 0, 6.7213, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_x5j60")

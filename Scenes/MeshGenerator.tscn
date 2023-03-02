@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://cmnuh2odulpr5"]
+
+[ext_resource type="Script" path="res://Scripts/Tools/mesh_generator.gd" id="1_lxtym"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_6o7p4"]
+_surfaces = [{
+"aabb": AABB(0, 0, 0, 1, 1, 1e-05),
+"format": 4097,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0),
+"primitive": 3,
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 0, 0)
+}]
+
+[node name="Mesh Generator" type="MeshInstance3D"]
+mesh = SubResource("ArrayMesh_6o7p4")
+script = ExtResource("1_lxtym")

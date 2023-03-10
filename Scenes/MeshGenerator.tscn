@@ -1,18 +1,53 @@
-[gd_scene load_steps=3 format=3 uid="uid://cmnuh2odulpr5"]
+[gd_scene load_steps=7 format=3 uid="uid://cmnuh2odulpr5"]
 
 [ext_resource type="Script" path="res://Scripts/Tools/mesh_generator.gd" id="1_lxtym"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_6o7p4"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_e1qp7"]
 _surfaces = [{
-"aabb": AABB(0, 0, 0, 1, 1, 1e-05),
+"aabb": AABB(0, 0, 0, 1, 1e-05, 1),
 "format": 4097,
-"index_count": 6,
-"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 2, 0),
+"index_count": 3,
+"index_data": PackedByteArray(0, 0, 2, 0, 1, 0),
 "primitive": 3,
-"vertex_count": 4,
-"vertex_data": PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 0, 0)
+"vertex_count": 3,
+"vertex_data": PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0)
 }]
 
-[node name="Mesh Generator" type="MeshInstance3D"]
-mesh = SubResource("ArrayMesh_6o7p4")
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dsol5"]
+
+[sub_resource type="Sky" id="Sky_cur3b"]
+sky_material = SubResource("ProceduralSkyMaterial_dsol5")
+
+[sub_resource type="Environment" id="Environment_jt5cf"]
+background_mode = 2
+sky = SubResource("Sky_cur3b")
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_lsdv2"]
+_surfaces = [{
+"aabb": AABB(0, 0, 0, 1, 1e-05, 1),
+"format": 1,
+"primitive": 0,
+"vertex_count": 3,
+"vertex_data": PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0)
+}]
+
+[node name="Mesh Generator" type="Node3D"]
 script = ExtResource("1_lxtym")
+xsize = 2
+zsize = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("ArrayMesh_e1qp7")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 15, 0)
+fov = 114.648
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_jt5cf")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.546218, 0.837643, 0, -0.837643, -0.546218, 0, 6.45878, 9.13045)
+
+[node name="Gizmos" type="MeshInstance3D" parent="."]
+mesh = SubResource("ArrayMesh_lsdv2")

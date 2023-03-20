@@ -73,6 +73,14 @@ var update:bool=false:
 	get:
 		return y_offset
 
+@export var show_normal_debug:bool=false:
+	set(val):
+		update=true
+		immediate_mesh.clear_surfaces()
+		show_normal_debug = val
+	get:
+		return show_normal_debug
+
 @onready var mesh3D = $MeshInstance3D
 # contains mesh data.
 var arrays = []
@@ -91,79 +99,52 @@ var indices = PackedInt32Array()
 func _ready():
 	immediate_mesh.clear_surfaces()
 	arrays.resize(Mesh.ARRAY_MAX)
-	
-	
-	_build_mesh()
+#	_build_mesh()
 
 func _build_mesh():
 	verts.resize((xsize+1)*(zsize+1))
 	indices.resize(xsize*zsize*6)
 	normals.resize(len(verts))
+	uvs.resize(len(verts))
 	
 	noise.seed = rand_from_seed(noise_seed)[0]
 	noise.fractal_octaves = octaves
 	
 	populate_vertices()
 	
+	create_uvs()
+	
 	populate_indices()
 	
 	create_normals()
 	
-#	draw_debug_normal()
+	if(show_normal_debug):
+		draw_debug_normal()
+#	print(indices)
 #	print(verts)
 #	for x in range(0,len(indices),3):
 #		print(indices[x], indices[x+1], indices[x+2])
-
 	
 	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	
-
+	
 	mesh3D.mesh = ArrayMesh.new()
 	mesh3D.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	
 
-func draw_sphere(pos:Vector3):
-	var ins:MeshInstance3D = MeshInstance3D.new()
-	add_child(ins)
-	ins.position=pos
-	var sphere:SphereMesh = SphereMesh.new()
-	sphere.radius= 0.1
-	sphere.height=0.2
-	ins.mesh=sphere
+
 
 func _process(_delta):
 	if(update):
 		_build_mesh()
 		update=false
 
-
-func populate_indices():
-	var vert:int = 0
-	var tris:int = 0
-	
-	for z in range(zsize):
-		# each iteration 6 indices = 2 triangles are being added to indices.
-		for x in range(xsize):
-			indices[tris+0] = vert+0
-			indices[tris+1] = vert+xsize+1
-			indices[tris+2] = vert+1
-			indices[tris+3] = vert+1
-			indices[tris+4] = vert+xsize+1
-			indices[tris+5] = vert+xsize+2
-			
-			tris+=6
-			vert+=1
-		vert+=1
-	@warning_ignore("integer_division")
-	print("tris:",len(indices)/3)
-	
-
 func populate_vertices():
 	var i=0
-	for x in range(zsize+1):
-		for z in range(xsize+1):
+	for z in range(zsize+1):
+		for x in range(xsize+1):
 			var y = clamp(
 				noise.get_noise_2d(x+x_offset,z+y_offset)*height,
 				height_threshold*height,
@@ -173,6 +154,51 @@ func populate_vertices():
 			verts[i] = pos
 #			draw_sphere(pos)
 			i += 1
+
+func create_uvs():
+#	var i:int=0 
+	for i in range(len(uvs)):
+		var uv = Vector2(float(verts[i].x)/xsize,float(verts[i].z)/zsize)
+		uvs[i] = uv
+		
+#	for z in range(zsize+1):
+#		for x in range(xsize+1):
+#			var uv = Vector2(float(x)/xsize,float(z)/zsize)
+#			uvs[i] = uv
+#			i += 1
+
+func populate_indices():
+	var vert:int = 0
+	var tris:int = 0
+	
+	for _i in range(zsize):
+		# each iteration 6 indices = 2 triangles are being added to indices.
+		for _j in range(xsize):
+#			indices[tris+0] = vert+0
+#			indices[tris+1] = vert+xsize+1
+#			indices[tris+2] = vert+1
+#			indices[tris+3] = vert+1
+#			indices[tris+4] = vert+xsize+1
+#			indices[tris+5] = vert+xsize+2
+			
+			indices[tris+0] = vert
+			indices[tris+1] = vert+1
+			indices[tris+2] = vert+xsize+1
+			indices[tris+3] = vert+1
+			indices[tris+4] = vert+xsize+2
+			indices[tris+5] = vert+xsize+1
+			
+			
+			
+			tris+=6
+			vert+=1
+		vert+=1
+	@warning_ignore("integer_division")
+	print("tris: ",len(indices)/3)
+
+
+
+
 
 func create_normals():
 	@warning_ignore("integer_division")
@@ -212,6 +238,8 @@ func calculate_surface_normal_from_indices(
 		return normal_vec.normalized()
 		
 
+
+# ------- Debug Tools ------- #
 func draw_debug_normal():
 	immediate_mesh.clear_surfaces()
 	var mesh_ins := MeshInstance3D.new()
@@ -221,15 +249,19 @@ func draw_debug_normal():
 	immediate_mesh.clear_surfaces()
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 	for i in range(len(normals)):
-		print("vertex: ",verts[i])
-		print("normal: ",normals[i])
-#		print(normals[i].is_normalized())
-		var start:Vector3 = verts[i]
-		
-		var end:Vector3 = start + (normals[i])
+		var start:Vector3 = verts[i] # bottom position of the line
+		var end:Vector3 = start + (normals[i]) # tip position of the line
 		immediate_mesh.surface_add_vertex(start)
 		immediate_mesh.surface_add_vertex(end)
 		
 	immediate_mesh.surface_end()
-	
 	add_child(mesh_ins)
+
+func draw_sphere(pos:Vector3):
+	var ins:MeshInstance3D = MeshInstance3D.new()
+	add_child(ins)
+	ins.position=pos
+	var sphere:SphereMesh = SphereMesh.new()
+	sphere.radius= 0.1
+	sphere.height=0.2
+	ins.mesh=sphere

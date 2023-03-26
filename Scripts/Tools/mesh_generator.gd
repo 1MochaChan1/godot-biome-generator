@@ -1,14 +1,25 @@
 @tool
 extends Node
 
+
+
 var noise:FastNoiseLite = FastNoiseLite.new()
 var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
+var water = Region.new('water', 0.05,Color.LIGHT_SEA_GREEN)
+var sand = Region.new('sand', 0.25, Color.SANDY_BROWN)
+var land = Region.new('land', 0.5, Color.FOREST_GREEN)
+var mountains = Region.new('mountains', 0.7, Color.ANTIQUE_WHITE)
+
+var regions:Array = [water, sand, land, mountains]
+
 
 var update:bool=false:
 	set(val):
 		update=val
 	get:
 		return update
+
+
 
 @export var xsize:int=40:
 	set(val):
@@ -66,12 +77,12 @@ var update:bool=false:
 	get:
 		return x_offset
 
-@export var y_offset:float = 0:
+@export var z_offset:float = 0:
 	set(val):
 		update=true
-		y_offset=val
+		z_offset=val
 	get:
-		return y_offset
+		return z_offset
 
 @export var show_normal_debug:bool=false:
 	set(val):
@@ -118,8 +129,11 @@ func _build_mesh():
 	
 	create_normals()
 	
+	apply_basic_texture()
+	
 	if(show_normal_debug):
 		draw_debug_normal()
+	
 #	print(indices)
 #	print(verts)
 #	for x in range(0,len(indices),3):
@@ -129,6 +143,7 @@ func _build_mesh():
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	arrays[Mesh.ARRAY_NORMAL] = normals
+#	arrays[Mesh.ARRAY_COLOR] = colors
 	
 	
 	mesh3D.mesh = ArrayMesh.new()
@@ -145,27 +160,58 @@ func populate_vertices():
 	var i=0
 	for z in range(zsize+1):
 		for x in range(xsize+1):
+			
 			var y = clamp(
-				noise.get_noise_2d(x+x_offset,z+y_offset)*height,
+				noise.get_noise_2d(x+x_offset,z+z_offset)*height,
 				height_threshold*height,
 				height)
 			var pos:Vector3 = Vector3(x*stretch, y, z*stretch)
-			# assign position values to index i in array verts
+#			assign position values to index i in array verts
 			verts[i] = pos
 #			draw_sphere(pos)
 			i += 1
 
 func create_uvs():
-#	var i:int=0 
 	for i in range(len(uvs)):
 		var uv = Vector2(float(verts[i].x)/xsize,float(verts[i].z)/zsize)
 		uvs[i] = uv
-		
+	
+#	var i:int=0 
 #	for z in range(zsize+1):
 #		for x in range(xsize+1):
 #			var uv = Vector2(float(x)/xsize,float(z)/zsize)
 #			uvs[i] = uv
 #			i += 1
+
+func apply_basic_texture():
+	var img:= Image.create(xsize, zsize, false, Image.FORMAT_RGB8)
+	for z in zsize+1:
+		for x in xsize+1:
+			var noise_val= noise.get_noise_2d(x+x_offset,z+z_offset)
+#			print(noise_val)
+			if((noise_val > -1.0) and (noise_val <= -0.2)):
+				img.set_pixel(x,z,water.color)
+			elif((noise_val > -.2) and (noise_val <= -0.1)):
+				img.set_pixel(x,z,sand.color)
+			elif(( noise_val > -0.1) and (noise_val <= 0.3)):
+				img.set_pixel(x,z,land.color)
+			elif((noise_val > 0.3) and (noise_val<= 1.0)):
+				img.set_pixel(x,z,mountains.color)
+#			for i in len(regions):
+#				var region = regions[i]
+#				print("-----")
+#				if(noise_val<region.height):
+#					print(region.name)
+#					img.set_pixel(x,z,region.color)
+#					continue
+			
+			
+	var texture := ImageTexture.create_from_image(img)
+	var mat:= ORMMaterial3D.new()
+	mat.albedo_texture = texture
+	mesh3D.material_override = mat
+
+
 
 func populate_indices():
 	var vert:int = 0
@@ -195,9 +241,6 @@ func populate_indices():
 		vert+=1
 	@warning_ignore("integer_division")
 	print("tris: ",len(indices)/3)
-
-
-
 
 
 func create_normals():

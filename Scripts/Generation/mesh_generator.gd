@@ -1,25 +1,33 @@
 @tool
 extends Node
 
-
+var player = preload("res://Scripts/Player/movement.gd")
 
 var noise:FastNoiseLite = FastNoiseLite.new()
 var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
-var water = Region.new('water', 0.05,Color.LIGHT_SEA_GREEN)
-var sand = Region.new('sand', 0.25, Color.SANDY_BROWN)
-var land = Region.new('land', 0.5, Color.FOREST_GREEN)
-var mountains = Region.new('mountains', 0.7, Color.ANTIQUE_WHITE)
+#var water = Region.new('water', -0.2,Color.LIGHT_SEA_GREEN)
+#var sand = Region.new('sand',-0.1, Color.SANDY_BROWN)
+#var land = Region.new('land', 0.5, Color.FOREST_GREEN)
+#var mountains = Region.new('mountains', 0.7, Color.ANTIQUE_WHITE)
+var person:Person
 
-var regions:Array = [water, sand, land, mountains]
+
+var img:Image
 
 
-var update:bool=false:
+@export var regions:Array[RegionModel]:
+	set(val):
+		update=true
+		print("set")
+		regions = val
+	get:
+		return regions
+
+@export var update:bool=false:
 	set(val):
 		update=val
 	get:
 		return update
-
-
 
 @export var xsize:int=40:
 	set(val):
@@ -93,6 +101,7 @@ var update:bool=false:
 		return show_normal_debug
 
 @onready var mesh3D = $MeshInstance3D
+
 # contains mesh data.
 var arrays = []
 
@@ -120,6 +129,8 @@ func _build_mesh():
 	
 	noise.seed = rand_from_seed(noise_seed)[0]
 	noise.fractal_octaves = octaves
+	
+	img = Image.create(xsize, zsize, false, Image.FORMAT_RGB8)
 	
 	populate_vertices()
 	
@@ -184,19 +195,33 @@ func create_uvs():
 #			i += 1
 
 func apply_basic_texture():
-	var img:= Image.create(xsize, zsize, false, Image.FORMAT_RGB8)
-	for z in zsize+1:
-		for x in xsize+1:
+	for z in zsize:
+		for x in xsize:
 			var noise_val= noise.get_noise_2d(x+x_offset,z+z_offset)
+			for i in range(len(regions)):
+				var region = regions[i]
+				if(i == (len(regions)-1)):
+					if((noise_val > regions[i-1].height) and (noise_val <= 1.0)):
+						img.set_pixel(x,z,regions[-1].color)
+				elif(i==0):
+					if(noise_val<=region.height):
+						img.set_pixel(x,z,region.color)
+					continue
+				else:
+					if((noise_val > regions[i-1].height) and (noise_val <= region.height)):
+						img.set_pixel(x,z,region.color)
+					else:
+						continue
+				
 #			print(noise_val)
-			if((noise_val > -1.0) and (noise_val <= -0.2)):
-				img.set_pixel(x,z,water.color)
-			elif((noise_val > -.2) and (noise_val <= -0.1)):
-				img.set_pixel(x,z,sand.color)
-			elif(( noise_val > -0.1) and (noise_val <= 0.3)):
-				img.set_pixel(x,z,land.color)
-			elif((noise_val > 0.3) and (noise_val<= 1.0)):
-				img.set_pixel(x,z,mountains.color)
+#			if((noise_val <= -0.2)):
+#				img.set_pixel(x,z,Color.NAVY_BLUE)
+#			elif((noise_val > -.2) and (noise_val <= -0.1)):
+#				img.set_pixel(x,z,Color.SANDY_BROWN)
+#			elif(( noise_val > -0.1) and (noise_val <= 0.3)):
+#				img.set_pixel(x,z,Color.FOREST_GREEN)
+#			elif((noise_val > 0.3) and (noise_val<= 1.0)):
+#				img.set_pixel(x,z,Color.ALICE_BLUE)
 #			for i in len(regions):
 #				var region = regions[i]
 #				print("-----")
@@ -220,13 +245,6 @@ func populate_indices():
 	for _i in range(zsize):
 		# each iteration 6 indices = 2 triangles are being added to indices.
 		for _j in range(xsize):
-#			indices[tris+0] = vert+0
-#			indices[tris+1] = vert+xsize+1
-#			indices[tris+2] = vert+1
-#			indices[tris+3] = vert+1
-#			indices[tris+4] = vert+xsize+1
-#			indices[tris+5] = vert+xsize+2
-			
 			indices[tris+0] = vert
 			indices[tris+1] = vert+1
 			indices[tris+2] = vert+xsize+1

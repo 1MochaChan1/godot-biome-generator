@@ -1,4 +1,3 @@
-extends Node
 class_name TextureGenerator
 
 func apply_basic_texture(
@@ -13,23 +12,16 @@ func apply_basic_texture(
 	
 	for z in zsize:
 		for x in xsize:
-			var noise_val= noise.get_noise_2d(x+x_offset,z+z_offset)
-	
+			var noise_val:float = noise.get_noise_2d(x+x_offset,z+z_offset)
+		
 			for i in range(len(regions)):
 				var region = regions[i]
-				if(i == (len(regions)-1)):
-					if((noise_val > regions[i-1].height) and (noise_val <= 1.0)):
-						
-						img.set_pixel(x,z,regions[-1].color)
-				elif(i==0):
-					if(noise_val<=region.height):
-						img.set_pixel(x,z,region.color)
-					continue
-				else:
-					if((noise_val > regions[i-1].height) and (noise_val <= region.height)):
-						img.set_pixel(x,z,region.color)
-					else:
-						continue
+				
+				if(noise_val<region.height):
+					img.set_pixel(x,z,region.color)
+					break
+				elif(i==(len(regions)-1)):
+					img.set_pixel(x,z,region.color)
 	
 	var texture := ImageTexture.create_from_image(img)
 	var mat:= ORMMaterial3D.new()

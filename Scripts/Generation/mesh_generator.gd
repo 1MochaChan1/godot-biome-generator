@@ -1,17 +1,10 @@
 @tool
 extends Node
 
-var player = preload("res://Scripts/Player/movement.gd")
-
+#var player = preload("res://Scripts/Player/movement.gd")
+var texture_gen = preload("res://Scripts/Generation/texture_generator.gd").new()
 var noise:FastNoiseLite = FastNoiseLite.new()
 var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
-#var water = Region.new('water', -0.2,Color.LIGHT_SEA_GREEN)
-#var sand = Region.new('sand',-0.1, Color.SANDY_BROWN)
-#var land = Region.new('land', 0.5, Color.FOREST_GREEN)
-#var mountains = Region.new('mountains', 0.7, Color.ANTIQUE_WHITE)
-var person:Person
-
-
 var img:Image
 
 
@@ -78,6 +71,13 @@ var img:Image
 	get:
 		return octaves
 
+@export var lacunarity:float = 1.25:
+	set(val):
+		update=true
+		lacunarity=val
+	get:
+		return lacunarity
+
 @export var x_offset:float = 0:
 	set(val):
 		update=true
@@ -119,18 +119,34 @@ var indices = PackedInt32Array()
 func _ready():
 	immediate_mesh.clear_surfaces()
 	arrays.resize(Mesh.ARRAY_MAX)
-#	_build_mesh()
+	_build_terrain()
 
-func _build_mesh():
+func _process(_delta):
+	if(update):
+		_build_terrain()
+		mesh3D.material_override= texture_gen.apply_basic_texture(
+			xsize,
+			zsize,
+			x_offset,
+			z_offset,
+			noise,
+			regions
+		)
+		update=false
+
+
+func _build_terrain():
+	# dealing with mesh
 	verts.resize((xsize+1)*(zsize+1))
 	indices.resize(xsize*zsize*6)
 	normals.resize(len(verts))
 	uvs.resize(len(verts))
 	
+	# dealing with noise data
+	noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	noise.seed = rand_from_seed(noise_seed)[0]
 	noise.fractal_octaves = octaves
-	
-	img = Image.create(xsize, zsize, false, Image.FORMAT_RGB8)
+#	noise.fractal_lacunarity = lacunarity
 	
 	populate_vertices()
 	
@@ -140,7 +156,6 @@ func _build_mesh():
 	
 	create_normals()
 	
-	apply_basic_texture()
 	
 	if(show_normal_debug):
 		draw_debug_normal()
@@ -162,10 +177,7 @@ func _build_mesh():
 
 
 
-func _process(_delta):
-	if(update):
-		_build_mesh()
-		update=false
+
 
 func populate_vertices():
 	var i=0
@@ -186,56 +198,6 @@ func create_uvs():
 	for i in range(len(uvs)):
 		var uv = Vector2(float(verts[i].x)/xsize,float(verts[i].z)/zsize)
 		uvs[i] = uv
-	
-#	var i:int=0 
-#	for z in range(zsize+1):
-#		for x in range(xsize+1):
-#			var uv = Vector2(float(x)/xsize,float(z)/zsize)
-#			uvs[i] = uv
-#			i += 1
-
-func apply_basic_texture():
-	for z in zsize:
-		for x in xsize:
-			var noise_val= noise.get_noise_2d(x+x_offset,z+z_offset)
-			for i in range(len(regions)):
-				var region = regions[i]
-				if(i == (len(regions)-1)):
-					if((noise_val > regions[i-1].height) and (noise_val <= 1.0)):
-						img.set_pixel(x,z,regions[-1].color)
-				elif(i==0):
-					if(noise_val<=region.height):
-						img.set_pixel(x,z,region.color)
-					continue
-				else:
-					if((noise_val > regions[i-1].height) and (noise_val <= region.height)):
-						img.set_pixel(x,z,region.color)
-					else:
-						continue
-				
-#			print(noise_val)
-#			if((noise_val <= -0.2)):
-#				img.set_pixel(x,z,Color.NAVY_BLUE)
-#			elif((noise_val > -.2) and (noise_val <= -0.1)):
-#				img.set_pixel(x,z,Color.SANDY_BROWN)
-#			elif(( noise_val > -0.1) and (noise_val <= 0.3)):
-#				img.set_pixel(x,z,Color.FOREST_GREEN)
-#			elif((noise_val > 0.3) and (noise_val<= 1.0)):
-#				img.set_pixel(x,z,Color.ALICE_BLUE)
-#			for i in len(regions):
-#				var region = regions[i]
-#				print("-----")
-#				if(noise_val<region.height):
-#					print(region.name)
-#					img.set_pixel(x,z,region.color)
-#					continue
-			
-			
-	var texture := ImageTexture.create_from_image(img)
-	var mat:= ORMMaterial3D.new()
-	mat.albedo_texture = texture
-	mesh3D.material_override = mat
-
 
 
 func populate_indices():

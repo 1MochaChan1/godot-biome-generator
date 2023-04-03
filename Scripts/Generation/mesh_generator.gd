@@ -18,12 +18,15 @@ var x_offset:float
 var z_offset:float
 var height:float 
 var height_threshold:float
-var stretch_factor:float
+var tiling_factor:float
+var height_curve:Curve
+
 
 func _init(
 	x_size:int=40, z_size:int=40,
 	x_offset_:float=0, z_offset_:float=0,
 	height_:float=20, height_threshold_:float=-0.35,
+	height_curve_:Curve = Curve.new(),
 	stretch_factor_:float=1):
 		
 	self.xsize = x_size
@@ -32,7 +35,8 @@ func _init(
 	self.z_offset = z_offset_
 	self.height = height_
 	self.height_threshold = height_threshold_
-	self.stretch_factor = stretch_factor_
+	self.height_curve = height_curve_
+	self.tiling_factor = stretch_factor_
 
 
 func create_terrain_mesh(
@@ -52,9 +56,10 @@ func create_terrain_mesh(
 	
 	create_indices() # creates indices 3 elements for each triangle.
 	
+	create_uvs() # creating uvs to apply texture
+	
 	create_normals() # creates normals by taking cross product
 	
-	create_uvs() # creating uvs to apply texture
 	
 	mesh_arrays[Mesh.ARRAY_VERTEX] = verts
 	mesh_arrays[Mesh.ARRAY_TEX_UV] = uvs
@@ -66,19 +71,29 @@ func create_terrain_mesh(
 	
 	return mesh
 
+
+
 func create_vertices(noise:Noise):
 	var i=0
 	for z in range(zsize+1):
 		for x in range(xsize+1):
+			var noise_val = noise.get_noise_2d(x+x_offset,z+z_offset)
+#			var y = normalize_noise(noise_val)*height
+#			var y = noise_val*height
 			var y = clamp(
-				noise.get_noise_2d(x+x_offset,z+z_offset)*height,
+				noise_val*height,
 				height_threshold*height,
 				height)
-			var pos:Vector3 = Vector3(x*stretch_factor, y, z*stretch_factor)
-#			assign position values to index i in array verts
+			var pos:Vector3 = Vector3(x*tiling_factor, y, z*tiling_factor)
+			# assign position values to index i in array verts
 			verts[i] = pos
 #			draw_sphere(pos)
 			i += 1
+
+
+func normalize_noise(noise_val)->float:
+	var factor = (-noise_val + 1)*0.5
+	return noise_val + factor
 
 
 func create_indices():

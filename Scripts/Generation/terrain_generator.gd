@@ -79,14 +79,14 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return height_threshold
 
-@export var stretch:float = 1.0:
+@export var tile:float = 1.0:
 	set(val):
 		update=true
-		stretch=val
-		mesh_gen.stretch_factor=val
+		tile=val
+		mesh_gen.tiling_factor=val
 		
 	get:
-		return stretch
+		return tile
 
 @export var noise_seed:int = 100:
 	set(val):
@@ -117,6 +117,8 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return show_debug_normals
 
+
+
 @onready var mesh3D = $MeshInstance3D
 
 func _ready():
@@ -134,7 +136,7 @@ func _process(_delta):
 		update=false
 
 func create_terrain():
-	noise = noise_gen.generator_noise(noise_seed, octaves, lacunarity)
+	noise = noise_gen.generator_noise(noise_seed, octaves, lacunarity,FastNoiseLite.TYPE_SIMPLEX)
 	mesh3D = mesh_gen.create_terrain_mesh(mesh3D,noise)
 	mesh3D.material_override= texture_gen.apply_basic_texture(
 		xsize,

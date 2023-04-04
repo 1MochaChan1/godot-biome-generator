@@ -18,25 +18,26 @@ var x_offset:float
 var z_offset:float
 var height:float 
 var height_threshold:float
-var tiling_factor:float
-var height_curve:Curve
+var stretch_factor:float
+var level_of_detail:int
 
+var mesh_simplification_increment:int
+var vertices_per_line:int
 
 func _init(
-	x_size:int=40, z_size:int=40,
+	x_size:int=40, z_size:int=40,level_of_detail_:int=0,
 	x_offset_:float=0, z_offset_:float=0,
 	height_:float=20, height_threshold_:float=-0.35,
-	height_curve_:Curve = Curve.new(),
 	stretch_factor_:float=1):
 		
 	self.xsize = x_size
 	self.zsize = z_size
+	self.level_of_detail=level_of_detail_
 	self.x_offset = x_offset_
 	self.z_offset = z_offset_
 	self.height = height_
 	self.height_threshold = height_threshold_
-	self.height_curve = height_curve_
-	self.tiling_factor = stretch_factor_
+	self.stretch_factor = stretch_factor_
 
 
 func create_terrain_mesh(
@@ -45,25 +46,35 @@ func create_terrain_mesh(
 	
 	# sizing the arrays.
 	mesh_arrays.resize(Mesh.ARRAY_MAX)
+	# • --- •
+	# |     |
+	# • --- • <--- Each quad requires n+1 vertices. 
 	verts.resize((xsize+1)*(zsize+1))
+	
+	# Each quad requires 2 triangles
+	# 2 triangles = 6 vertices.
 	indices.resize(xsize*zsize*6)
-	normals.resize(len(verts))
-	uvs.resize(len(verts))
+	
+	
+	uvs.resize((xsize+1)*(zsize+1))
+	normals.resize((xsize+1)*(zsize+1))
 	
 	# calling methods to build the mesh.
+	mesh_simplification_increment = 1 if level_of_detail == 0 else level_of_detail * 2
+	@warning_ignore("integer_division")
+	vertices_per_line = ((xsize-1)/ mesh_simplification_increment) + 1
 	
 	create_vertices(noise) # maps the vertices
 	
-	create_indices() # creates indices 3 elements for each triangle.
-	
-	create_uvs() # creating uvs to apply texture
+	create_indices() # creates indices, 3 elements for each triangle.
 	
 	create_normals() # creates normals by taking cross product
 	
+	create_uvs() # creating uvs to apply texture
 	
 	mesh_arrays[Mesh.ARRAY_VERTEX] = verts
-	mesh_arrays[Mesh.ARRAY_TEX_UV] = uvs
 	mesh_arrays[Mesh.ARRAY_INDEX] = indices
+	mesh_arrays[Mesh.ARRAY_TEX_UV] = uvs
 	mesh_arrays[Mesh.ARRAY_NORMAL] = normals
 	
 	mesh.mesh = ArrayMesh.new()
@@ -71,50 +82,42 @@ func create_terrain_mesh(
 	
 	return mesh
 
-
-
 func create_vertices(noise:Noise):
 	var i=0
-	for z in range(zsize+1):
-		for x in range(xsize+1):
-			var noise_val = noise.get_noise_2d(x+x_offset,z+z_offset)
-#			var y = normalize_noise(noise_val)*height
-#			var y = noise_val*height
+	for z in range(0,zsize+1,mesh_simplification_increment):
+		for x in range(0,xsize+1,mesh_simplification_increment):
 			var y = clamp(
-				noise_val*height,
+				noise.get_noise_2d(x+x_offset,z+z_offset)*height,
 				height_threshold*height,
 				height)
-			var pos:Vector3 = Vector3(x*tiling_factor, y, z*tiling_factor)
-			# assign position values to index i in array verts
+			var pos:Vector3 = Vector3(x*stretch_factor, y, z*stretch_factor)
+			
+#			assign position values to index i in array verts
 			verts[i] = pos
 #			draw_sphere(pos)
 			i += 1
 
 
-func normalize_noise(noise_val)->float:
-	var factor = (-noise_val + 1)*0.5
-	return noise_val + factor
-
-
-func create_indices():
+func create_indices(): #TODO: shift this in create_vertices.
 	var vert:int = 0
 	var tris:int = 0
-	
-	for _i in range(zsize):
+	for _i in range(0,zsize,mesh_simplification_increment):
 		# each iteration 6 indices = 2 triangles are being added to indices.
-		for _j in range(xsize):
+		for _j in range(0,zsize,mesh_simplification_increment):
 			indices[tris+0] = vert
 			indices[tris+1] = vert+1
-			indices[tris+2] = vert+xsize+1
+			indices[tris+2] = vert+vertices_per_line+1
 			indices[tris+3] = vert+1
-			indices[tris+4] = vert+xsize+2
-			indices[tris+5] = vert+xsize+1
+			indices[tris+4] = vert+vertices_per_line+2
+			indices[tris+5] = vert+vertices_per_line+1
 			
 			tris+=6
 			vert+=1
 		vert+=1
 	@warning_ignore("integer_division")
 	print("tris: ",len(indices)/3)
+
+
 
 
 func create_normals():

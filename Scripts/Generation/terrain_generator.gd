@@ -5,9 +5,9 @@ const Player = preload("res://Scripts/Player/movement.gd")
 const MeshGenerator = preload("res://Scripts/Generation/mesh_generator.gd")
 const TextureGenerator = preload("res://Scripts/Generation/texture_generator.gd")
 const NoiseGenerator =  preload("res://Scripts/Generation/noise_generator.gd")
+const MAP_CHUNK_SIZE:int = 240
 
 
-#var player = preload("res://Scripts/Player/movement.gd")
 var mesh_gen:MeshGenerator = MeshGenerator.new()
 var texture_gen:TextureGenerator = TextureGenerator.new()
 var noise_gen:NoiseGenerator = NoiseGenerator.new()
@@ -15,13 +15,9 @@ var noise_gen:NoiseGenerator = NoiseGenerator.new()
 var noise:FastNoiseLite
 var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 
+@onready var mesh3D = $MeshInstance3D
 
-@export var regions:Array[RegionModel]:
-	set(val):
-		update=true
-		regions = val
-	get:
-		return regions
+# ------- Tool ------- #
 
 @export var update:bool=false:
 	set(val):
@@ -30,22 +26,25 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 		return update
 
 
-@export var xsize:int=40:
-	set(val):
-		update=true
-		xsize=val
-		mesh_gen.xsize=val
-	get:
-		return xsize
+# ------- Landmass ------- #
 
-@export var zsize:int=40:
-	set(val):
-		update=true
-		zsize=val
-		mesh_gen.zsize=val
-		
-	get:
-		return zsize
+# --- size ---
+#@export var xsize:int=241:
+#	set(val):
+#		update=true
+#		xsize=val
+#		mesh_gen.xsize=val
+#	get:
+#		return xsize
+#
+#@export var zsize:int=241:
+#	set(val):
+#		update=true
+#		zsize=val
+#		mesh_gen.zsize=val
+#
+#	get:
+#		return zsize
 
 @export var x_offset:float = 0:
 	set(val):
@@ -63,6 +62,17 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return z_offset
 
+
+@export_range(0,6) var level_of_detail:int=0:
+	set(val):
+		update = true
+		level_of_detail = val
+		mesh_gen.level_of_detail = val
+	get:
+		return level_of_detail
+
+
+# --- height ---
 @export var height:float = 20.0:
 	set(val):
 		update=true
@@ -79,14 +89,24 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return height_threshold
 
-@export var stretch:float = 1.0:
+# --- texture ---
+@export var tile:float = 1.0:
 	set(val):
 		update=true
-		stretch=val
-		mesh_gen.stretch_factor=val
-		
+		tile=val
+		mesh_gen.tiling_factor=val
 	get:
-		return stretch
+		return tile
+
+@export var regions:Array[RegionModel]:
+	set(val):
+		update=true
+		regions = val
+	get:
+		return regions
+
+
+# ------- noise ------- #
 
 @export var noise_seed:int = 100:
 	set(val):
@@ -109,6 +129,9 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return lacunarity
 
+
+# ------- debug ------- #
+
 @export var show_debug_normals:bool=false:
 	set(val):
 		update=true
@@ -117,16 +140,10 @@ var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 	get:
 		return show_debug_normals
 
-@onready var mesh3D = $MeshInstance3D
 
 func _ready():
 	immediate_mesh.clear_surfaces()
-	mesh_gen = MeshGenerator.new(
-		xsize,
-		zsize,
-		x_offset,
-		z_offset,
-	)
+
 
 func _process(_delta):
 	if(update):
@@ -134,11 +151,20 @@ func _process(_delta):
 		update=false
 
 func create_terrain():
-	noise = noise_gen.generator_noise(noise_seed, octaves, lacunarity)
+	mesh_gen = MeshGenerator.new(
+		MAP_CHUNK_SIZE,
+		MAP_CHUNK_SIZE,
+		level_of_detail,
+		x_offset,
+		z_offset,
+	)
+	noise = noise_gen.generator_noise(noise_seed, octaves, lacunarity,FastNoiseLite.TYPE_SIMPLEX)
 	mesh3D = mesh_gen.create_terrain_mesh(mesh3D,noise)
 	mesh3D.material_override= texture_gen.apply_basic_texture(
-		xsize,
-		zsize,
+#		xsize,
+#		zsize,
+		MAP_CHUNK_SIZE,
+		MAP_CHUNK_SIZE,
 		x_offset,
 		z_offset,
 		noise,
@@ -165,11 +191,11 @@ func draw_debug_normal():
 	immediate_mesh.surface_end()
 	add_child(mesh_ins)
 #
-#func draw_sphere(pos:Vector3):
-#	var ins:MeshInstance3D = MeshInstance3D.new()
-#	add_child(ins)
-#	ins.position=pos
-#	var sphere:SphereMesh = SphereMesh.new()
-#	sphere.radius= 0.1
-#	sphere.height=0.2
-#	ins.mesh=sphere
+func draw_sphere(pos:Vector3):
+	var ins:MeshInstance3D = MeshInstance3D.new()
+	add_child(ins)
+	ins.position=pos
+	var sphere:SphereMesh = SphereMesh.new()
+	sphere.radius= 0.1
+	sphere.height=0.2
+	ins.mesh=sphere

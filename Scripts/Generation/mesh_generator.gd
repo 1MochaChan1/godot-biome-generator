@@ -78,7 +78,7 @@ func create_terrain_mesh(
 	mesh_arrays[Mesh.ARRAY_INDEX] = indices
 	mesh_arrays[Mesh.ARRAY_TEX_UV] = uvs
 	mesh_arrays[Mesh.ARRAY_NORMAL] = normals
-	
+	print(len(indices)/3)
 	mesh.mesh = ArrayMesh.new()
 	mesh.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
 	

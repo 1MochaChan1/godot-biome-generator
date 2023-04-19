@@ -1,10 +1,10 @@
 @tool
 class_name TerrainGenerator extends Node
 
-const Player = preload("res://Scripts/Player/movement.gd")
-const MeshGenerator = preload("res://Scripts/Generation/mesh_generator.gd")
-const TextureGenerator = preload("res://Scripts/Generation/texture_generator.gd")
-const NoiseGenerator =  preload("res://Scripts/Generation/noise_generator.gd")
+#const Player = preload("res://Scripts/Player/movement.gd")
+#const MeshGenerator = preload("res://Scripts/Generation/mesh_generator.gd")
+#const TextureGenerator = preload("res://Scripts/Generation/texture_generator.gd")
+#const NoiseGenerator =  preload("res://Scripts/Generation/noise_generator.gd")
 const MAP_CHUNK_SIZE:int = 240
 
 
@@ -15,7 +15,7 @@ var noise_gen:NoiseGenerator = NoiseGenerator.new()
 var noise:FastNoiseLite
 var immediate_mesh:ImmediateMesh = ImmediateMesh.new()
 
-@onready var mesh3D = $MeshInstance3D
+@export var mesh3D:MeshInstance3D = MeshInstance3D.new()
 
 # ------- Tool ------- #
 

@@ -125,6 +125,8 @@ For example:
     - For LOD_n > 0 (take 1 if LOD_n = 0)
         - This means the total number of vertices to be rendered per line (row) can be given my `(chunk_size - 1 /LOD_n) + 1`
         - we can call this `mesh_simplification_increment`
+    - ![LOD_explanation](https://github.com/1MochaChan1/godot-biome-generator/assets/74943095/ff1f35de-e8d1-4569-8656-cd486b66d430)
+
 
 4. What after we get the vertices? How do we make the indices/triangles array?
     - The process will be the exact same except, instead of using the `width` (i.e. length, supposing we're iterating through breadth first.) we can make use of `mesh_simplification_increment`

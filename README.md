@@ -33,11 +33,13 @@ For example:
       - This order dictates which vertices should be rendered first.
       - For example:
 
+          ```
           2     3
           •     •  
 
           •     •
           0     1
+          ```
           `vertices_array = [0,1,2,3]`
 
           - In order to make a quad out of these vertices we will need to create triangles
